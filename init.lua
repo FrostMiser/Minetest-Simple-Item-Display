@@ -53,7 +53,7 @@ minetest.register_chatcommand("item-display", { -- Command to turn item display 
 
 function get_looking_node(player) -- Return the node the given player is looking at or nil
     local lookat
-    for i = 0, 10 do -- 10 is the maximum distance you can point to things in creative mode by default
+    for i = 0, 2 do -- 10 is the maximum distance you can point to things in creative mode by default, using 2 to only display nearby items
         local lookvector = -- This variable will store what node we might be looking at
             vector.add( -- This add function corrects for the players approximate height
                 vector.add( -- This add function applies the camera's position to the look vector
