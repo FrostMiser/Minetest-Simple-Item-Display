@@ -4,6 +4,7 @@ local player_to_enabled = {} -- Enable/disable item display
 
 local ypos = 0.9
 local xpos = 0.45
+local display_distance = 2 -- Distance from the player before the display shows up. Maximum 10.
 
 minetest.register_globalstep(function(dtime) -- This will run every tick, so around 20 times/second
     for _, player in ipairs(minetest:get_connected_players()) do -- Do everything below for each player in-game
@@ -11,10 +12,9 @@ minetest.register_globalstep(function(dtime) -- This will run every tick, so aro
         if not player_to_enabled[player] then return end -- Don't do anything if they have it disabled
         local lookat = get_looking_node(player) -- Get the node they're looking at
 
-
         if lookat then 
             if player_to_cnode[player] ~= lookat.name then -- Only do anything if they are looking at a different type of block than before
-                local nodename = describe_node(lookat) -- Get the details of the block in a nice looking way
+                local nodename = get_node_name(lookat) -- Get the details of the block in a nice looking way
                 player:hud_change(player_to_id_text[player], "text", nodename) -- If they are looking at something, display that
                 local node_object = minetest.registered_nodes[lookat.name] -- Get information about the block
             end
@@ -53,7 +53,7 @@ minetest.register_chatcommand("item-display", { -- Command to turn item display 
 
 function get_looking_node(player) -- Return the node the given player is looking at or nil
     local lookat
-    for i = 0, 2 do -- 10 is the maximum distance you can point to things in creative mode by default, using 2 to only display nearby items
+    for i = 0, display_distance do
         local lookvector = -- This variable will store what node we might be looking at
             vector.add( -- This add function corrects for the players approximate height
                 vector.add( -- This add function applies the camera's position to the look vector
@@ -74,7 +74,7 @@ function get_looking_node(player) -- Return the node the given player is looking
 end
 
 
-function describe_node(node) 
+function get_node_name(node) 
     local nodename = minetest.registered_nodes[node.name].description 
     if nodename == "" then -- If it doesn't have a proper name, just use the technical one
         nodename = node.name
