@@ -75,7 +75,14 @@ end
 
 
 function get_node_name(node) 
+    
+	-- Check this in case node is unknown and does not have a description
+	if minetest.registered_nodes[node.name] then
+	    return ""
+	end
+	
     local nodename = minetest.registered_nodes[node.name].description 
+	
     if nodename == "" then -- If it doesn't have a proper name, just use the technical one
         nodename = node.name
     end
