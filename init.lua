@@ -22,11 +22,9 @@ minetest.register_globalstep(function(dtime) -- This will run every tick, so aro
     
 	-- Do everything below for each player in-game
     for _, player in ipairs(minetest:get_connected_players()) do 
-        -- Enable by default
-        if player_to_enabled[player] == nil then player_to_enabled[player] = true end 
-        if not player_to_enabled[player] then return end -- Don't do anything if they have it disabled
-        local lookat = get_looking_node(player) -- Get the node they're looking at
-
+        if not is_id_enabled(player) then return end
+        
+        local lookat = get_looking_node(player)
         if lookat then 
             if player_to_cnode[player] ~= lookat.name then -- Only do anything if they are looking at a different type of block than before
                 local nodename = get_node_name(lookat) -- Get the details of the block in a nice looking way
@@ -46,7 +44,7 @@ end)
 minetest.register_on_joinplayer(function(player) -- Add the hud to all players
     player_to_id_text[player] = player:hud_add({ -- Add the block name text
         hud_elem_type = "text",
-        text = "test",
+        text = "",
         number = 0xffffff,
         alignment = {x = 1, y = 0},
         position = {x = display_x_position, y = display_y_position},
@@ -60,22 +58,46 @@ minetest.register_chatcommand("id", {
 	description = "Toggle Item Display on or off",
 	func = function(name, param)
 		local player = minetest.get_player_by_name(name)
-        
+
 		if not player then return false end
+        item_disp = is_id_enabled(player)
         
-        if player_to_enabled[player] == true then
+        if is_id_enabled(player) == false then
+            player_to_enabled[player] = true
+            player_meta:set_int("item_display", 0)
+            set_id_enabled(player, true)
+            minetest.chat_send_player(name, core.colorize("#66ff00","Item display enabled."))
+        else
             player_to_enabled[player] = false
             blank_player_hud(player)
             player_to_cnode[player] = nil
-            minetest.chat_send_player(name, "Item display disabled.")
-        else
-            player_to_enabled[player] = true
-            minetest.chat_send_player(name, "Item display enabled.")
+            set_id_enabled(player, false)
+            minetest.chat_send_player(name, core.colorize("#66ff00", "Item display disabled."))        
         end
         
         return true
 	end
 })
+
+
+function is_id_enabled(player)
+    player_meta = player:get_meta()
+    if player_meta:get_int("item_display") == 0 then
+        return true
+    end
+    
+    return false  
+end
+
+
+function set_id_enabled(player, enabled)
+    player_meta = player:get_meta()
+    if enabled == true then
+        player_meta:set_int("item_display", 0)
+    else
+        player_meta:set_int("item_display", -1)
+    end
+end
 
 
 function get_looking_node(player) -- Return the node the given player is looking at or nil
