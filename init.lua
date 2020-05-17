@@ -1,10 +1,15 @@
+-- ********************
+-- Settings
+local display_y_position = 0.9
+local display_x_position = 0.45
+local display_distance = 2 -- Distance from the player before the display shows up. Maximum 10.
+-- ********************
+
+
 local player_to_id_text = {} -- Storage of players so the mod knows what huds to update
 local player_to_cnode = {} -- Get the current looked at node
 local player_to_enabled = {} -- Enable/disable item display
 
-local ypos = 0.9
-local xpos = 0.45
-local display_distance = 2 -- Distance from the player before the display shows up. Maximum 10.
 
 minetest.register_globalstep(function(dtime) -- This will run every tick, so around 20 times/second
     for _, player in ipairs(minetest:get_connected_players()) do -- Do everything below for each player in-game
@@ -27,13 +32,14 @@ minetest.register_globalstep(function(dtime) -- This will run every tick, so aro
     end
 end)
 
+
 minetest.register_on_joinplayer(function(player) -- Add the hud to all players
     player_to_id_text[player] = player:hud_add({ -- Add the block name text
         hud_elem_type = "text",
         text = "test",
         number = 0xffffff,
         alignment = {x = 1, y = 0},
-        position = {x = xpos, y = ypos},
+        position = {x = display_x_position, y = display_y_position},
     })
 end)
 
@@ -50,6 +56,7 @@ minetest.register_chatcommand("item-display", { -- Command to turn item display 
         return true
 	end
 })
+
 
 function get_looking_node(player) -- Return the node the given player is looking at or nil
     local lookat
@@ -74,10 +81,10 @@ function get_looking_node(player) -- Return the node the given player is looking
 end
 
 
+-- Returns the name of a node, or "" if name cannot be determined
 function get_node_name(node) 
-    
-	-- Check this in case node is unknown and does not have a description
-	if minetest.registered_nodes[node.name] then
+    -- Check this in case node is unknown and does not have a description
+	if minetest.registered_nodes[node.name] == nil then
 	    return ""
 	end
 	
@@ -86,18 +93,16 @@ function get_node_name(node)
     if nodename == "" then -- If it doesn't have a proper name, just use the technical one
         nodename = node.name
     end
-    nodename = capitalize(nodename):gsub("[_-]", " ") 
+	-- Capitalize the node name
+	nodename = string.gsub(" "..nodename, "%W%l", string.upper):sub(2)
+	-- Replace - and _ in the node name with spaces
+    nodename = nodename:gsub("[_-]", " ") 
     return nodename
 end
 
 
-function capitalize(str) -- Capitalize every word in a string, looks good for node names
-    return string.gsub(" "..str, "%W%l", string.upper):sub(2)
-end
-
-
 function update_player_hud_pos(player, to_x, to_y) -- Change position of hud elements
-    to_y = to_y or ypos
+    to_y = to_y or display_y_position
     player:hud_change(player_to_id_text[player], "position", {x = to_x, y = to_y})
 end
 
