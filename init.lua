@@ -1,7 +1,7 @@
 -- ********************
 -- Settings
-local display_y_position = 0.9
-local display_x_position = 0.45
+local display_y_position = 0.9 -- Y screen position of the display
+local display_x_position = 0.45 -- X screen position of the display
 local display_distance = 2 -- Distance from the player before the display shows up. Maximum 10.
 local update_interval = 0.15 -- How often to update the display, lower numbers are more responsive.
 -- ********************
@@ -10,7 +10,7 @@ local update_interval = 0.15 -- How often to update the display, lower numbers a
 local player_to_id_text = {} -- Storage of players so the mod knows what huds to update
 local player_to_cnode = {} -- Get the current looked at node
 local player_to_enabled = {} -- Enable/disable item display
-local update_time = 0
+local update_time = 0 -- Used for the update interval
 
 minetest.register_globalstep(function(dtime) -- This will run every tick, so around 20 times/second
 	update_time = update_time + dtime
@@ -19,9 +19,11 @@ minetest.register_globalstep(function(dtime) -- This will run every tick, so aro
 	else
 		update_time = 0
 	end
-	
-    for _, player in ipairs(minetest:get_connected_players()) do -- Do everything below for each player in-game
-        if player_to_enabled[player] == nil then player_to_enabled[player] = true end -- Enable by default
+    
+	-- Do everything below for each player in-game
+    for _, player in ipairs(minetest:get_connected_players()) do 
+        -- Enable by default
+        if player_to_enabled[player] == nil then player_to_enabled[player] = true end 
         if not player_to_enabled[player] then return end -- Don't do anything if they have it disabled
         local lookat = get_looking_node(player) -- Get the node they're looking at
 
@@ -52,15 +54,25 @@ minetest.register_on_joinplayer(function(player) -- Add the hud to all players
 end)
 
 
-minetest.register_chatcommand("item-display", { -- Command to turn item display on or off
-	params = "<on/off>",
-	description = "Turn Item Display on or off",
+-- Command to toggle item display on or off
+minetest.register_chatcommand("id", { 
+	params = "",
+	description = "Toggle Item Display on or off",
 	func = function(name, param)
 		local player = minetest.get_player_by_name(name)
+        
 		if not player then return false end
-        player_to_enabled[player] = param == "on"
-        blank_player_hud(player)
-        player_to_cnode[player] = nil
+        
+        if player_to_enabled[player] == true then
+            player_to_enabled[player] = false
+            blank_player_hud(player)
+            player_to_cnode[player] = nil
+            minetest.chat_send_player(name, "Item display disabled.")
+        else
+            player_to_enabled[player] = true
+            minetest.chat_send_player(name, "Item display enabled.")
+        end
+        
         return true
 	end
 })
@@ -68,21 +80,22 @@ minetest.register_chatcommand("item-display", { -- Command to turn item display 
 
 function get_looking_node(player) -- Return the node the given player is looking at or nil
     local lookat
-    for i = 0, display_distance do
-        local lookvector = -- This variable will store what node we might be looking at
-            vector.add( -- This add function corrects for the players approximate height
-                vector.add( -- This add function applies the camera's position to the look vector
-                    vector.multiply( -- This multiply function adjusts the distance from the camera by the iteration of the loop we're in
-                        player:get_look_dir(), 
-                        i -- Goes from 0 to 10
-                    ), 
-                    player:get_pos()
+    for distance = 0, display_distance do
+        -- lookvector stores what node we might be looking at    
+        local lookvector = 
+            -- Add function corrects for the players approximate height
+            vector.add( 
+                -- Add function applies the camera's position to the look vector            
+                vector.add( 
+					-- Multiply function adjusts the distance from the camera by the iteration of the loop we're in				
+                    vector.multiply(player:get_look_dir(), distance), 
+					player:get_pos()
                 ),
                 vector.new(0, 1.5, 0)
             )
-        lookat = minetest.get_node_or_nil( -- This actually gets the node we might be looking at
-            lookvector
-        ) or lookat
+        -- Get the node the player is looking at
+        lookat = minetest.get_node_or_nil(lookvector) or lookat
+        
         if lookat ~= nil and lookat.name ~= "air" and lookat.name ~= "walking_light:light" then break else lookat = nil end -- If we *are* looking at something, stop the loop and continue
     end
     return lookat
@@ -98,22 +111,29 @@ function get_node_name(node)
 	
     local nodename = minetest.registered_nodes[node.name].description 
 	
-    if nodename == "" then -- If it doesn't have a proper name, just use the technical one
+    -- If it doesn't have a proper name, just use the technical one
+    if nodename == "" then 
         nodename = node.name
     end
+    
 	-- Capitalize the node name
 	nodename = string.gsub(" "..nodename, "%W%l", string.upper):sub(2)
 	-- Replace - and _ in the node name with spaces
     nodename = nodename:gsub("[_-]", " ") 
+    -- Replace newlines with commas so that the text doesn't overlap with the hud below it
+    nodename = nodename:gsub("\n", ", ") 
     return nodename
 end
 
 
-function update_player_hud_pos(player, to_x, to_y) -- Change position of hud elements
+-- Change position of hud elements
+function update_player_hud_pos(player, to_x, to_y) 
     to_y = to_y or display_y_position
     player:hud_change(player_to_id_text[player], "position", {x = to_x, y = to_y})
 end
 
-function blank_player_hud(player) -- Make hud appear blank
+
+-- Clear the display hud
+function blank_player_hud(player) 
     player:hud_change(player_to_id_text[player], "text", "")
 end
