@@ -3,15 +3,23 @@
 local display_y_position = 0.9
 local display_x_position = 0.45
 local display_distance = 2 -- Distance from the player before the display shows up. Maximum 10.
+local update_interval = 0.15 -- How often to update the display, lower numbers are more responsive.
 -- ********************
 
 
 local player_to_id_text = {} -- Storage of players so the mod knows what huds to update
 local player_to_cnode = {} -- Get the current looked at node
 local player_to_enabled = {} -- Enable/disable item display
-
+local update_time = 0
 
 minetest.register_globalstep(function(dtime) -- This will run every tick, so around 20 times/second
+	update_time = update_time + dtime
+	if update_time < update_interval then
+		return
+	else
+		update_time = 0
+	end
+	
     for _, player in ipairs(minetest:get_connected_players()) do -- Do everything below for each player in-game
         if player_to_enabled[player] == nil then player_to_enabled[player] = true end -- Enable by default
         if not player_to_enabled[player] then return end -- Don't do anything if they have it disabled
