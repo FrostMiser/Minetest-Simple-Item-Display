@@ -6,7 +6,6 @@ local display_distance = 2 -- Distance from the player before the display shows 
 local update_interval = 0.15 -- How often to update the display, lower numbers are more responsive.
 -- ********************
 
-
 local player_to_id_text = {} -- Storage of players so the mod knows what huds to update
 local player_to_cnode = {} -- Get the current looked at node
 local player_to_enabled = {} -- Enable/disable item display
@@ -14,6 +13,7 @@ local update_time = 0 -- Used for the update interval
 local modname = minetest.get_current_modname() -- Used for importing functions via dofile
 
 dofile(minetest.get_modpath(modname).."/functions.lua")
+
 
 minetest.register_globalstep(function(dtime) -- This will run every tick, so around 20 times/second
 	update_time = update_time + dtime
@@ -81,6 +81,7 @@ minetest.register_chatcommand("id", {
         return true
 	end
 })
+
 
 -- Change position of hud elements
 function update_player_hud_pos(player, to_x, to_y) 
