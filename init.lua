@@ -29,23 +29,31 @@ minetest.register_globalstep(function(dtime) -- This will run every tick, so aro
         
         local lookat = get_looking_node(player, display_distance)
         if lookat then 
-            if player_to_cnode[player] ~= lookat.name then -- Only do anything if they are looking at a different type of block than before
-                local nodename = get_node_name(lookat) -- Get the details of the block in a nice looking way
-                player:hud_change(player_to_id_text[player], "text", nodename) -- If they are looking at something, display that
-                local node_object = minetest.registered_nodes[lookat.name] -- Get information about the block
+            -- Only do anything if the player is looking at a different type of block than before
+            if player_to_cnode[player] ~= lookat.name then
+                -- Get the details of the block in a nice looking way
+                local nodename = get_node_name(lookat)
+                -- If player is looking at something, display the name
+                player:hud_change(player_to_id_text[player], "text", nodename)
+                -- Get the node
+                local node_object = minetest.registered_nodes[lookat.name]
             end
             player_to_cnode[player] = lookat.name -- Update the current node
         else
-            blank_player_hud(player) -- If they are not looking at anything, do not display the text
-            player_to_cnode[player] = nil -- Update the current node
+            -- If player is not looking at anything, do not display the text
+            blank_player_hud(player)
+            -- Update the current node
+            player_to_cnode[player] = nil
         end
 
     end
 end)
 
 
-minetest.register_on_joinplayer(function(player) -- Add the hud to all players
-    player_to_id_text[player] = player:hud_add({ -- Add the block name text
+-- Add the hud to all players
+minetest.register_on_joinplayer(function(player)
+    -- Add the block name text 
+    player_to_id_text[player] = player:hud_add({
         hud_elem_type = "text",
         text = "",
         number = 0xffffff,
